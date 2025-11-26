@@ -8,7 +8,7 @@
     <artifactId>amoba</artifactId>
     <version>1.0.0</version>
     <name>Amoba</name>
-    <description>Gomoku/Amőba játék</description>
+    <description>Gomoku/Amoba jatek</description>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

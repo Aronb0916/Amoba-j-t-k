@@ -1,4 +1,4 @@
-example\Main.class
-example\Player.class
-example\Game.class
-example\Board.class
+amobajatek\Game.class
+amobajatek\Player.class
+amobajatek\Board.class
+amobajatek\Main.class
