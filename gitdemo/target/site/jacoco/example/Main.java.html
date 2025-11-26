@@ -15,38 +15,40 @@ import java.util.Scanner;
 <span class="nc" id="L15">        String loadChoice = scanner.nextLine().trim();</span>
 
 <span class="nc bnc" id="L17" title="All 2 branches missed.">        if (loadChoice.equalsIgnoreCase(&quot;igen&quot;)) {</span>
-<span class="nc" id="L18">            game.loadGame();</span>
+<span class="nc" id="L18">            game.loadGameFromJson(&quot;amoba_save.json&quot;); // JSON betöltés</span>
         } else {
 <span class="nc" id="L20">            game.start();</span>
         }
 
+<span class="nc" id="L23">        boolean finished = false;</span>
 
-<span class="nc" id="L24">        boolean finished = false;</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        while (!finished) {</span>
+<span class="nc" id="L26">            System.out.print(&quot;Add meg a lépést (pl. a1), vagy írd be: exit -&gt; kilépés: &quot;);</span>
+<span class="nc" id="L27">            String input = scanner.nextLine().trim();</span>
 
-        String input;
-<span class="nc bnc" id="L27" title="All 2 branches missed.">        while (!finished) {</span>
-<span class="nc" id="L28">            System.out.print(&quot;Add meg a lépést (pl. a1), vagy írd be: exit -&gt; kilépés: &quot;);</span>
-<span class="nc" id="L29">            input = scanner.nextLine().trim();</span>
-
-<span class="nc bnc" id="L31" title="All 2 branches missed.">            if (input.length() &lt; 2) {</span>
-<span class="nc" id="L32">                System.out.println(&quot;Érvénytelen formátum!&quot;);</span>
-<span class="nc" id="L33">                continue;</span>
+            // 🔹 Exit kezelés
+<span class="nc bnc" id="L30" title="All 2 branches missed.">            if (input.equalsIgnoreCase(&quot;exit&quot;)) {</span>
+<span class="nc" id="L31">                game.saveGameAsJson(&quot;amoba_save.json&quot;);</span>
+<span class="nc" id="L32">                System.out.println(&quot;Kilépés és mentés...&quot;);</span>
+<span class="nc" id="L33">                break;</span>
             }
 
-<span class="nc" id="L36">            int col = input.charAt(0) - 'a';</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">            if (input.length() &lt; 2) {</span>
+<span class="nc" id="L37">                System.out.println(&quot;Érvénytelen formátum!&quot;);</span>
+<span class="nc" id="L38">                continue;</span>
+            }
+
+<span class="nc" id="L41">            int col = input.charAt(0) - 'a';</span>
             int row;
             try {
-<span class="nc" id="L39">                row = Integer.parseInt(input.substring(1)) - 1;</span>
-<span class="nc" id="L40">            } catch (NumberFormatException e) {</span>
-<span class="nc" id="L41">                System.out.println(&quot;Érvénytelen szám!&quot;);</span>
-<span class="nc" id="L42">                continue;</span>
-<span class="nc" id="L43">            }</span>
-
-<span class="nc" id="L45">            finished = game.lepes(row, col);</span>
-<span class="nc" id="L46">        }</span>
-
-
-<span class="nc" id="L49">        scanner.close();</span>
-<span class="nc" id="L50">    }</span>
+<span class="nc" id="L44">                row = Integer.parseInt(input.substring(1)) - 1;</span>
+<span class="nc" id="L45">            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L46">                System.out.println(&quot;Érvénytelen szám!&quot;);</span>
+<span class="nc" id="L47">                continue;</span>
+<span class="nc" id="L48">            }</span>
+<span class="nc" id="L49">            finished = game.lepes(row, col);</span>
+<span class="nc" id="L50">        }</span>
+<span class="nc" id="L51">        scanner.close();</span>
+<span class="nc" id="L52">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

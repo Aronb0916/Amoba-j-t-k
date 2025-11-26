@@ -15,18 +15,23 @@ public class Main {
         String loadChoice = scanner.nextLine().trim();
 
         if (loadChoice.equalsIgnoreCase("igen")) {
-            game.loadGame();
+            game.loadGameFromJson("amoba_save.json"); // JSON betöltés
         } else {
             game.start();
         }
 
-
         boolean finished = false;
 
-        String input;
         while (!finished) {
             System.out.print("Add meg a lépést (pl. a1), vagy írd be: exit -> kilépés: ");
-            input = scanner.nextLine().trim();
+            String input = scanner.nextLine().trim();
+
+            // 🔹 Exit kezelés
+            if (input.equalsIgnoreCase("exit")) {
+                game.saveGameAsJson("amoba_save.json");
+                System.out.println("Kilépés és mentés...");
+                break;
+            }
 
             if (input.length() < 2) {
                 System.out.println("Érvénytelen formátum!");
@@ -41,11 +46,8 @@ public class Main {
                 System.out.println("Érvénytelen szám!");
                 continue;
             }
-
             finished = game.lepes(row, col);
         }
-
-
         scanner.close();
     }
 }

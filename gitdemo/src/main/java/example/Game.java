@@ -4,6 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 public class Game {
@@ -47,12 +53,12 @@ public class Game {
 
         // ellenfél lép
         if (currentPlayer == playerO) {
-            computerMove(row, col);
+            ellenfellepes(row, col);
         }
         return false;
     }
 
-    private void computerMove(int lastHumanRow, int lastHumanCol) {
+    private void ellenfellepes(int lastHumanRow, int lastHumanCol) {
         Random rnd = new Random();
         int row, col;
 
@@ -181,5 +187,58 @@ public class Game {
     }
 
     public void loadGame() {
+    }
+
+
+    public void saveGameAsJson(String filename) {
+        try {
+            JSONObject gameState = new JSONObject();
+            JSONArray boardArray = new JSONArray();
+
+            char[][] grid = board.getGrid();
+            for (int r = 0; r < board.getRows(); r++) {
+                JSONArray rowArray = new JSONArray();
+                for (int c = 0; c < board.getCols(); c++) {
+                    rowArray.put(String.valueOf(grid[r][c]));
+                }
+                boardArray.put(rowArray);
+            }
+
+            gameState.put("currentPlayer", currentPlayer.getName());
+            gameState.put("board", boardArray);
+
+            try (FileWriter file = new FileWriter(filename)) {
+                file.write(gameState.toString(4));
+            }
+
+            System.out.println("Játékállás JSON formátumban elmentve: " + filename);
+        } catch (IOException e) {
+            System.out.println("Hiba a JSON mentés közben: " + e.getMessage());
+        }
+    }
+
+    public void loadGameFromJson(String filename) {
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(filename)));
+            JSONObject gameState = new JSONObject(content);
+
+            String currentPlayerName = gameState.getString("currentPlayer");
+            currentPlayer = currentPlayerName.equals(playerX.getName()) ? playerX : playerO;
+
+            JSONArray boardArray = gameState.getJSONArray("board");
+            char[][] grid = board.getGrid();
+            for (int r = 0; r < board.getRows(); r++) {
+                JSONArray rowArray = boardArray.getJSONArray(r);
+                for (int c = 0; c < board.getCols(); c++) {
+                    grid[r][c] = rowArray.getString(c).charAt(0);
+                }
+            }
+
+            System.out.println("Játékállás betöltve a JSON fájlból: " + filename);
+            board.printBoard();
+
+        } catch (IOException e) {
+            System.out.println("Hiba a JSON betöltés közben: " + e.getMessage());
+        }
     }
 }
