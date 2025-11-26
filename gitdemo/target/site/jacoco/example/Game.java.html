@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Game.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Amoba</a> &gt; <a href="index.source.html" class="el_package">example</a> &gt; <span class="el_source">Game.java</span></div><h1>Game.java</h1><pre class="source lang-java linenums">package example;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
+
+public class Game {
+    private final Board board;
+    private final Player playerX;
+    private final Player playerO;
+    private Player currentPlayer;
+<span class="fc" id="L14">    private boolean aiFirstMove = true; // jelzi, hogy a gép első lépését kell-e tenni</span>
+
+<span class="fc" id="L16">    public Game(int rows, int cols, String playerName) {</span>
+<span class="fc" id="L17">        this.board = new Board(rows, cols);</span>
+<span class="fc" id="L18">        this.playerX = new Player(playerName, 'X');</span>
+<span class="fc" id="L19">        this.playerO = new Player(&quot;Computer&quot;, 'O');</span>
+<span class="fc" id="L20">        this.currentPlayer = playerX;</span>
+<span class="fc" id="L21">    }</span>
+
+    public void start() {
+<span class="nc" id="L24">        System.out.println(&quot;Játék indul!&quot;);</span>
+<span class="nc" id="L25">        board.printBoard();</span>
+<span class="nc" id="L26">    }</span>
+
+    public boolean lepes(int row, int col) {
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (!isValid(row, col)) {</span>
+<span class="fc" id="L30">            System.out.println(&quot;Érvénytelen koordináta!&quot;);</span>
+<span class="fc" id="L31">            return false;</span>
+        }
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        if (!board.isEmpty(row, col)) {</span>
+<span class="fc" id="L34">            System.out.println(&quot;A mező foglalt!&quot;);</span>
+<span class="fc" id="L35">            return false;</span>
+        }
+
+<span class="fc" id="L38">        board.placeSymbol(row, col, currentPlayer.getSymbol());</span>
+<span class="fc" id="L39">        board.printBoard();</span>
+
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        if (checkWin(row, col)) {</span>
+<span class="nc" id="L42">            System.out.println(currentPlayer.getName() + &quot; nyert!&quot;);</span>
+<span class="nc" id="L43">            return true;</span>
+        }
+        // Körváltás
+<span class="fc" id="L46">        switchPlayer();</span>
+
+        // ellenfél lép
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        if (currentPlayer == playerO) {</span>
+<span class="fc" id="L50">            computerMove(row, col);</span>
+        }
+<span class="fc" id="L52">        return false;</span>
+    }
+
+    private void computerMove(int lastHumanRow, int lastHumanCol) {
+<span class="fc" id="L56">        Random rnd = new Random();</span>
+        int row, col;
+
+        // Próbáljon nyerni
+<span class="fc" id="L60">        int[] winPos = findWinningMove(playerO.getSymbol());</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        if (winPos != null) {</span>
+<span class="nc" id="L62">            board.placeSymbol(winPos[0], winPos[1], playerO.getSymbol());</span>
+<span class="nc" id="L63">            System.out.println(&quot;Computer nyerő lépést tett!&quot;);</span>
+<span class="nc" id="L64">            board.printBoard();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">            if (checkWin(winPos[0], winPos[1])) {</span>
+<span class="nc" id="L66">                System.out.println(&quot;Computer nyert!&quot;);</span>
+<span class="nc" id="L67">                return;</span>
+            }
+<span class="nc" id="L69">            switchPlayer();</span>
+<span class="nc" id="L70">            return;</span>
+        }
+<span class="fc" id="L72">        int[] blockPos = findWinningMove(playerX.getSymbol());</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (blockPos != null) {</span>
+<span class="nc" id="L74">            board.placeSymbol(blockPos[0], blockPos[1], playerO.getSymbol());</span>
+<span class="nc" id="L75">            System.out.println(&quot;Az ellenfél blokkolta a lépésed!&quot;);</span>
+<span class="nc" id="L76">            board.printBoard();</span>
+<span class="nc" id="L77">            switchPlayer();</span>
+<span class="nc" id="L78">            return;</span>
+        }
+        // Első lépés random
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (aiFirstMove) {</span>
+            do {
+<span class="fc" id="L83">                row = rnd.nextInt(board.getRows());</span>
+<span class="fc" id="L84">                col = rnd.nextInt(board.getCols());</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">            } while (!board.isEmpty(row, col));</span>
+<span class="fc" id="L86">            board.placeSymbol(row, col, playerO.getSymbol());</span>
+<span class="fc" id="L87">            aiFirstMove = false;</span>
+        } else {
+<span class="nc" id="L89">            List&lt;int[]&gt; neighbors = getNeighbors(lastHumanRow, lastHumanCol);</span>
+<span class="nc" id="L90">            Collections.shuffle(neighbors);</span>
+<span class="nc" id="L91">            boolean placed = false;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">            for (int[] pos : neighbors) {</span>
+<span class="nc bnc" id="L93" title="All 4 branches missed.">                if (isValid(pos[0], pos[1]) &amp;&amp; board.isEmpty(pos[0], pos[1])) {</span>
+<span class="nc" id="L94">                    board.placeSymbol(pos[0], pos[1], playerO.getSymbol());</span>
+<span class="nc" id="L95">                    placed = true;</span>
+<span class="nc" id="L96">                    break;</span>
+                }
+<span class="nc" id="L98">            }</span>
+            // Ha nincs üres szomszédos hely akkor random helyre rak az ellenfél
+<span class="nc bnc" id="L100" title="All 2 branches missed.">            if (!placed) {</span>
+                do {
+<span class="nc" id="L102">                    row = rnd.nextInt(board.getRows());</span>
+<span class="nc" id="L103">                    col = rnd.nextInt(board.getCols());</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                } while (!board.isEmpty(row, col));</span>
+<span class="nc" id="L105">                board.placeSymbol(row, col, playerO.getSymbol());</span>
+            }
+        }
+<span class="fc" id="L108">        board.printBoard();</span>
+
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        if (checkWin(lastHumanRow, lastHumanCol)) {</span>
+<span class="nc" id="L111">            System.out.println(&quot;Ellenfél nyert!&quot;);</span>
+<span class="nc" id="L112">            return;</span>
+        }
+        // Körváltás
+<span class="fc" id="L115">        switchPlayer();</span>
+<span class="fc" id="L116">    }</span>
+
+    private int[] findWinningMove(char symbol) {
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        for (int r = 0; r &lt; board.getRows(); r++) {</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            for (int c = 0; c &lt; board.getCols(); c++) {</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">                if (board.isEmpty(r, c)) {</span>
+<span class="fc" id="L122">                    board.getGrid()[r][c] = symbol;</span>
+<span class="fc" id="L123">                    boolean win = checkWin(r, c);</span>
+<span class="fc" id="L124">                    board.getGrid()[r][c] = '.';</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">                    if (win) {</span>
+<span class="nc" id="L126">                        return new int[]{r, c};</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L131">        return null;</span>
+    }
+
+    private List&lt;int[]&gt; getNeighbors(int row, int col) {
+<span class="nc" id="L135">        List&lt;int[]&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        for (int dr = -1; dr &lt;= 1; dr++) {</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            for (int dc = -1; dc &lt;= 1; dc++) {</span>
+<span class="nc bnc" id="L138" title="All 4 branches missed.">                if (dr == 0 &amp;&amp; dc == 0) {</span>
+<span class="nc" id="L139">                    continue;</span>
+                }
+<span class="nc" id="L141">                list.add(new int[]{row + dr, col + dc});</span>
+            }
+        }
+<span class="nc" id="L144">        return list;</span>
+    }
+
+    private void switchPlayer() {
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        currentPlayer = (currentPlayer == playerX) ? playerO : playerX;</span>
+<span class="fc" id="L149">    }</span>
+
+    private boolean isValid(int row, int col) {
+<span class="fc bfc" id="L152" title="All 8 branches covered.">        return row &gt;= 0 &amp;&amp; row &lt; board.getRows() &amp;&amp; col &gt;= 0 &amp;&amp; col &lt; board.getCols();</span>
+    }
+
+    private boolean checkWin(int row, int col) {
+<span class="fc" id="L156">        char symbol = currentPlayer.getSymbol();</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">        return checkDirection(row, col, symbol, 0, 1)</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">                || checkDirection(row, col, symbol, 1, 0)</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">                || checkDirection(row, col, symbol, 1, 1)</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">                || checkDirection(row, col, symbol, 1, -1);</span>
+    }
+
+    private boolean checkDirection(int row, int col, char symbol, int dr, int dc) {
+<span class="fc" id="L164">        int count = 1;</span>
+
+<span class="fc" id="L166">        int r = row + dr;</span>
+<span class="fc" id="L167">        int c = col + dc;</span>
+<span class="pc bpc" id="L168" title="1 of 4 branches missed.">        while (isValid(r, c) &amp;&amp; board.getGrid()[r][c] == symbol) {</span>
+<span class="nc" id="L169">            count++;</span>
+<span class="nc" id="L170">            r += dr;</span>
+<span class="nc" id="L171">            c += dc;</span>
+        }
+<span class="fc" id="L173">        r = row - dr;</span>
+<span class="fc" id="L174">        c = col - dc;</span>
+<span class="pc bpc" id="L175" title="1 of 4 branches missed.">        while (isValid(r, c) &amp;&amp; board.getGrid()[r][c] == symbol) {</span>
+<span class="nc" id="L176">            count++;</span>
+<span class="nc" id="L177">            r -= dr;</span>
+<span class="nc" id="L178">            c -= dc;</span>
+        }
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">        return count &gt;= 5;</span>
+    }
+
+    public void loadGame() {
+<span class="nc" id="L184">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,21 @@
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+    <!-- Sorhossz maximum -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Kapcsos zárójelek kötelezőek -->
+        <module name="NeedBraces"/>
+        <!-- Whitespace szabályok -->
+        <module name="WhitespaceAround"/>
+        <!-- Névkonvenciók -->
+        <module name="MethodName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+    </module>
+</module>
