@@ -30,12 +30,10 @@ public class Main {
                 System.out.println("Kilépés és mentés");
                 break;
             }
-
             if (input.length() < 2) {
                 System.out.println("Érvénytelen formátum!");
                 continue;
             }
-
             int col = input.charAt(0) - 'a';
             int row;
             try {
@@ -44,7 +42,6 @@ public class Main {
                 System.out.println("Érvénytelen szám!");
                 continue;
             }
-
             finished = game.lepes(row, col);
         }
 

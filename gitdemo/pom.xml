@@ -8,7 +8,7 @@
     <artifactId>amoba</artifactId>
     <version>1.0.0</version>
     <name>Amoba</name>
-    <description>Gomoku/Amoba jatek</description>
+    <description>Gomoku/Amoba játék</description>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -17,20 +17,17 @@
 
         <junit.jupiter.version>5.11.0</junit.jupiter.version>
         <mockito.version>5.12.0</mockito.version>
-        <logback.version>1.5.7</logback.version>
-        <h2.version>2.3.232</h2.version>
         <jacoco.version>0.8.11</jacoco.version>
+        <checkstyle.version>3.3.1</checkstyle.version>
     </properties>
 
     <dependencies>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-
 
         <dependency>
             <groupId>org.mockito</groupId>
@@ -39,22 +36,10 @@
             <scope>test</scope>
         </dependency>
 
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20231013</version>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>7.10.2</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -68,13 +53,11 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <addClasspath>true</addClasspath>
-                            <mainClass>amoba.App</mainClass>
+                            <mainClass>amobajatek.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
-
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -86,7 +69,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>amoba.App</mainClass>
+                            <mainClass>amobajatek.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -98,7 +81,6 @@
                     </execution>
                 </executions>
             </plugin>
-
 
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -119,12 +101,26 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <rules>
+                        <rule>
+                            <element>BUNDLE</element>
+                            <limits>
+                                <limit>
+                                    <counter>INSTRUCTION</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.80</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>${checkstyle.version}</version>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>

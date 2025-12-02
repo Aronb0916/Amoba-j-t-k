@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Game {
-    private final Board board;
+    final Board board;
     private final Player playerX;
     private final Player playerO;
     private Player currentPlayer;
@@ -117,7 +117,7 @@ public class Game {
         switchPlayer();
     }
 
-    private int[] findWinningMove(char symbol) {
+    int[] findWinningMove(char symbol) {
         for (int r = 0; r < board.getRows(); r++) {
             for (int c = 0; c < board.getCols(); c++) {
                 if (board.isEmpty(r, c)) {
@@ -226,11 +226,14 @@ public class Game {
                 }
             }
 
-            System.out.println("Játékállás betöltve a JSON fájlból: " + filename);
+            System.out.println("Jatekallas JSON fájlból: " + filename);
             board.printBoard();
+        } catch (java.io.FileNotFoundException e) {
+            System.err.println("Nem található a fájl vagy olvasási hiba: " + e.getMessage());
 
         } catch (IOException e) {
             System.out.println("Hiba a JSON betöltés közben: " + e.getMessage());
         }
     }
-}
+    }
+
