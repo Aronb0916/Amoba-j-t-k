@@ -235,5 +235,27 @@ public class Game {
             System.out.println("Hiba a JSON betöltés közben: " + e.getMessage());
         }
     }
-    }
+    public void updateHighscore(String winnerName, String filename) throws IOException {
+        JSONObject highscores;
+
+        if (Files.exists(Paths.get(filename))) {
+            String content = new String(Files.readAllBytes(Paths.get(filename)));
+            highscores = new JSONObject(content);
+        } else {
+            highscores = new JSONObject();
+        }
+
+        int currentScore = highscores.optInt(winnerName, 0);
+        highscores.put(winnerName, currentScore + 1);
+
+        try (FileWriter file = new FileWriter(filename)) {
+            file.write(highscores.toString(4));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("Jelenlegi állás " + winnerName + ": " + (currentScore + 1));
+    } }
+    
+
 
