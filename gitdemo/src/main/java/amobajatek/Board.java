@@ -1,13 +1,13 @@
 package amobajatek;
 
 public class Board {
-    private final int rows;
-    private final int cols;
+    private final int sor;
+    private final int oszlop;
     private final char[][] grid;
 
     public Board(int rows, int cols) {
-        this.rows = rows;
-        this.cols = cols;
+        this.sor = rows;
+        this.oszlop = cols;
         this.grid = new char[rows][cols];
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
@@ -16,12 +16,12 @@ public class Board {
         }
     }
 
-    public int getRows() {
-        return rows;
+    public int getSor () {
+        return sor;
     }
 
-    public int getCols() {
-        return cols;
+    public int getOszlop () {
+        return oszlop;
     }
 
     public char[][] getGrid() {
@@ -39,18 +39,18 @@ public class Board {
     public void printBoard() {
         System.out.println();
         System.out.print("   ");
-        for (int c = 0; c < cols; c++) {
+        for (int c = 0; c < oszlop; c++) {
             char colLabel = (char) ('a' + c);
             System.out.print(colLabel + " ");
         }
         System.out.println();
-        for (int r = 0; r < rows; r++) {
+        for (int r = 0; r < sor; r++) {
             String rowLabel = String.valueOf(r + 1);
             if (rowLabel.length() == 1) {
                 rowLabel = " " + rowLabel;
             }
             System.out.print(rowLabel + " ");
-            for (int c = 0; c < cols; c++) {
+            for (int c = 0; c < oszlop; c++) {
                 System.out.print(grid[r][c] + " ");
             }
             System.out.println();

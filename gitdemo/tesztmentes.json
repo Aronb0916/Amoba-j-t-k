@@ -1,5 +1,5 @@
 {
-    "currentPlayer": "Teszt",
+    "currentPlayer": "TesztJatekos",
     "board": [
         [
             "X",
@@ -12,12 +12,12 @@
             ".",
             ".",
             ".",
-            "O",
+            ".",
             "."
         ],
         [
             ".",
-            ".",
+            "O",
             ".",
             ".",
             "."

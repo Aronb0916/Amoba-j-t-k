@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Game.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Amoba</a> &gt; <a href="index.source.html" class="el_package">amobajatek</a> &gt; <span class="el_source">Game.java</span></div><h1>Game.java</h1><pre class="source lang-java linenums">package amobajatek;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+
+public class Game {
+    final Board board;
+    private final Player playerX;
+    private final Player playerO;
+    Player currentPlayer;
+<span class="fc" id="L23">    private boolean aiFirstMove = true;</span>
+
+<span class="fc" id="L25">    public Game(int rows, int cols, String playerName) {</span>
+<span class="fc" id="L26">        this.board = new Board(rows, cols);</span>
+<span class="fc" id="L27">        this.playerX = new Player(playerName, 'X');</span>
+<span class="fc" id="L28">        this.playerO = new Player(&quot;Computer&quot;, 'O');</span>
+<span class="fc" id="L29">        this.currentPlayer = playerX;</span>
+<span class="fc" id="L30">    }</span>
+
+    public void start() {
+<span class="fc" id="L33">        System.out.println(&quot;Játék indul!&quot;);</span>
+<span class="fc" id="L34">        board.printBoard();</span>
+<span class="fc" id="L35">    }</span>
+
+    public boolean lepes(int row, int col) throws IOException {
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        if (!isValid(row, col)) {</span>
+<span class="fc" id="L39">            System.out.println(&quot;Érvénytelen koordináta!&quot;);</span>
+<span class="fc" id="L40">            return false;</span>
+        }
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (!board.isEmpty(row, col)) {</span>
+<span class="fc" id="L43">            System.out.println(&quot;A mező foglalt!&quot;);</span>
+<span class="fc" id="L44">            return false;</span>
+        }
+
+<span class="fc" id="L47">        board.placeSymbol(row, col, currentPlayer.getSymbol());</span>
+<span class="fc" id="L48">        board.printBoard();</span>
+
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (checkWin(row, col)) {</span>
+<span class="nc" id="L51">            System.out.println(currentPlayer.getName() + &quot; nyert!&quot;);</span>
+<span class="nc" id="L52">            updateHighscore(currentPlayer.getName(), &quot;highscores.json&quot;);</span>
+<span class="nc" id="L53">            return true;</span>
+        }
+
+<span class="fc" id="L56">        switchPlayer();</span>
+
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        if (currentPlayer == playerO) {</span>
+<span class="fc" id="L59">            ellenfellepes(row, col);</span>
+        }
+<span class="fc" id="L61">        return false;</span>
+    }
+
+    private void ellenfellepes(int lastHumanRow, int lastHumanCol) throws IOException {
+<span class="fc" id="L65">        Random rnd = new Random();</span>
+
+<span class="fc" id="L67">        int[] winPos = findWinningMove(playerO.getSymbol());</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (winPos != null) {</span>
+<span class="nc" id="L69">            board.placeSymbol(winPos[0], winPos[1], playerO.getSymbol());</span>
+<span class="nc" id="L70">            System.out.println(&quot;Computer nyerő lépést tett!&quot;);</span>
+<span class="nc" id="L71">            board.printBoard();</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">            if (checkWin(winPos[0], winPos[1])) {</span>
+<span class="nc" id="L73">                System.out.println(&quot;Computer nyert!&quot;);</span>
+<span class="nc" id="L74">                updateHighscore(playerO.getName(), &quot;highscores.json&quot;);</span>
+<span class="nc" id="L75">                return;</span>
+            }
+<span class="nc" id="L77">            switchPlayer();</span>
+<span class="nc" id="L78">            return;</span>
+        }
+
+<span class="fc" id="L81">        int[] blockPos = findWinningMove(playerX.getSymbol());</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        if (blockPos != null) {</span>
+<span class="nc" id="L83">            board.placeSymbol(blockPos[0], blockPos[1], playerO.getSymbol());</span>
+<span class="nc" id="L84">            System.out.println(&quot;Az ellenfél blokkolta a lépésed!&quot;);</span>
+<span class="nc" id="L85">            board.printBoard();</span>
+<span class="nc" id="L86">            switchPlayer();</span>
+<span class="nc" id="L87">            return;</span>
+        }
+
+        int row, col;
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (aiFirstMove) {</span>
+            do {
+<span class="fc" id="L93">                row = rnd.nextInt(board.getSor());</span>
+<span class="fc" id="L94">                col = rnd.nextInt(board.getOszlop());</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">            } while (!board.isEmpty(row, col));</span>
+<span class="fc" id="L96">            board.placeSymbol(row, col, playerO.getSymbol());</span>
+<span class="fc" id="L97">            aiFirstMove = false;</span>
+        } else {
+<span class="nc" id="L99">            List&lt;int[]&gt; neighbors = getNeighbors(lastHumanRow, lastHumanCol);</span>
+<span class="nc" id="L100">            Collections.shuffle(neighbors);</span>
+<span class="nc" id="L101">            boolean placed = false;</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            for (int[] pos : neighbors) {</span>
+<span class="nc bnc" id="L103" title="All 4 branches missed.">                if (isValid(pos[0], pos[1]) &amp;&amp; board.isEmpty(pos[0], pos[1])) {</span>
+<span class="nc" id="L104">                    board.placeSymbol(pos[0], pos[1], playerO.getSymbol());</span>
+<span class="nc" id="L105">                    placed = true;</span>
+<span class="nc" id="L106">                    break;</span>
+                }
+<span class="nc" id="L108">            }</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">            if (!placed) {</span>
+                do {
+<span class="nc" id="L111">                    row = rnd.nextInt(board.getSor());</span>
+<span class="nc" id="L112">                    col = rnd.nextInt(board.getOszlop());</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                } while (!board.isEmpty(row, col));</span>
+<span class="nc" id="L114">                board.placeSymbol(row, col, playerO.getSymbol());</span>
+            }
+        }
+
+<span class="fc" id="L118">        board.printBoard();</span>
+
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (checkWin(lastHumanRow, lastHumanCol)) {</span>
+<span class="nc" id="L121">            System.out.println(&quot;Ellenfél nyert!&quot;);</span>
+<span class="nc" id="L122">            updateHighscore(playerO.getName(), &quot;highscores.json&quot;);</span>
+<span class="nc" id="L123">            return;</span>
+        }
+
+<span class="fc" id="L126">        switchPlayer();</span>
+<span class="fc" id="L127">    }</span>
+
+    int[] findWinningMove(char symbol) {
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        for (int r = 0; r &lt; board.getSor(); r++) {</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">            for (int c = 0; c &lt; board.getOszlop(); c++) {</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">                if (board.isEmpty(r, c)) {</span>
+<span class="fc" id="L133">                    board.getGrid()[r][c] = symbol;</span>
+<span class="fc" id="L134">                    boolean win = checkWin(r, c);</span>
+<span class="fc" id="L135">                    board.getGrid()[r][c] = '.';</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">                    if (win) {</span>
+<span class="fc" id="L137">                        return new int[]{r, c};</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L142">        return null;</span>
+    }
+
+    private List&lt;int[]&gt; getNeighbors(int row, int col) {
+<span class="nc" id="L146">        List&lt;int[]&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        for (int dr = -1; dr &lt;= 1; dr++) {</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">            for (int dc = -1; dc &lt;= 1; dc++) {</span>
+<span class="nc bnc" id="L149" title="All 4 branches missed.">                if (dr == 0 &amp;&amp; dc == 0) {</span>
+<span class="nc" id="L150">                    continue;</span>
+                }
+<span class="nc" id="L152">                list.add(new int[]{row + dr, col + dc});</span>
+            }
+        }
+<span class="nc" id="L155">        return list;</span>
+    }
+
+    public void switchPlayer() {
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        currentPlayer = (currentPlayer == playerX) ? playerO : playerX;</span>
+<span class="fc" id="L160">    }</span>
+
+    boolean isValid(int row, int col) {
+<span class="fc bfc" id="L163" title="All 8 branches covered.">        return row &gt;= 0 &amp;&amp; row &lt; board.getSor() &amp;&amp; col &gt;= 0 &amp;&amp; col &lt; board.getOszlop();</span>
+    }
+
+    private boolean checkWin(int row, int col) {
+<span class="fc" id="L167">        char symbol = currentPlayer.getSymbol();</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        return checkDirection(row, col, symbol, 0, 1)</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">                || checkDirection(row, col, symbol, 1, 0)</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">                || checkDirection(row, col, symbol, 1, 1)</span>
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">                || checkDirection(row, col, symbol, 1, -1);</span>
+    }
+
+    boolean checkDirection(int row, int col, char symbol, int dr, int dc) {
+<span class="fc" id="L175">        int count = 1;</span>
+
+<span class="fc" id="L177">        int r = row + dr;</span>
+<span class="fc" id="L178">        int c = col + dc;</span>
+<span class="fc bfc" id="L179" title="All 4 branches covered.">        while (isValid(r, c) &amp;&amp; board.getGrid()[r][c] == symbol) {</span>
+<span class="fc" id="L180">            count++;</span>
+<span class="fc" id="L181">            r += dr;</span>
+<span class="fc" id="L182">            c += dc;</span>
+        }
+<span class="fc" id="L184">        r = row - dr;</span>
+<span class="fc" id="L185">        c = col - dc;</span>
+<span class="fc bfc" id="L186" title="All 4 branches covered.">        while (isValid(r, c) &amp;&amp; board.getGrid()[r][c] == symbol) {</span>
+<span class="fc" id="L187">            count++;</span>
+<span class="fc" id="L188">            r -= dr;</span>
+<span class="fc" id="L189">            c -= dc;</span>
+        }
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        return count &gt;= 5;</span>
+    }
+
+    public void saveGameAsJson(String filename) {
+        try {
+<span class="fc" id="L196">            JSONObject gameState = new JSONObject();</span>
+<span class="fc" id="L197">            JSONArray boardArray = new JSONArray();</span>
+
+<span class="fc" id="L199">            char[][] grid = board.getGrid();</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">            for (int r = 0; r &lt; board.getSor(); r++) {</span>
+<span class="fc" id="L201">                JSONArray rowArray = new JSONArray();</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">                for (int c = 0; c &lt; board.getOszlop(); c++) {</span>
+<span class="fc" id="L203">                    rowArray.put(String.valueOf(grid[r][c]));</span>
+                }
+<span class="fc" id="L205">                boardArray.put(rowArray);</span>
+            }
+
+<span class="fc" id="L208">            gameState.put(&quot;currentPlayer&quot;, currentPlayer.getName());</span>
+<span class="fc" id="L209">            gameState.put(&quot;board&quot;, boardArray);</span>
+
+<span class="fc" id="L211">            try (FileWriter file = new FileWriter(filename)) {</span>
+<span class="fc" id="L212">                file.write(gameState.toString(4));</span>
+            }
+
+<span class="fc" id="L215">            System.out.println(&quot;Jatekallas JSON formátumban elmentve: &quot; + filename);</span>
+<span class="nc" id="L216">        } catch (IOException e) {</span>
+<span class="nc" id="L217">            System.out.println(&quot;Hiba a JSON mentés közben: &quot; + e.getMessage());</span>
+<span class="fc" id="L218">        }</span>
+<span class="fc" id="L219">    }</span>
+
+    public void updateHighscore(String winnerName, String filename) throws IOException {
+<span class="fc" id="L222">        highscoresql dao = new highscoresql();</span>
+<span class="fc" id="L223">        dao.ensurePlayerExists(playerX.getName());</span>
+<span class="fc" id="L224">        dao.ensurePlayerExists(playerO.getName());</span>
+<span class="fc" id="L225">        dao.updateScore(winnerName);</span>
+
+        // SQL-ből visszaolvasás
+<span class="fc" id="L228">        JSONObject highscores = new JSONObject();</span>
+<span class="fc" id="L229">        try (Connection conn = DriverManager.getConnection(&quot;jdbc:sqlite:amoba.db&quot;);</span>
+<span class="fc" id="L230">             Statement stmt = conn.createStatement();</span>
+<span class="fc" id="L231">             ResultSet rs = stmt.executeQuery(&quot;SELECT name, score FROM highscores&quot;)) {</span>
+
+<span class="fc bfc" id="L233" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L234">                highscores.put(rs.getString(&quot;name&quot;), rs.getInt(&quot;score&quot;));</span>
+            }
+<span class="nc" id="L236">        } catch (SQLException e) {</span>
+<span class="nc" id="L237">            System.out.println(&quot;Hiba az SQL olvasás közben: &quot; + e.getMessage());</span>
+<span class="fc" id="L238">        }</span>
+
+        // JSON fájlba írás
+<span class="fc" id="L241">        try (FileWriter file = new FileWriter(filename)) {</span>
+<span class="fc" id="L242">            file.write(highscores.toString(4));</span>
+        }
+
+<span class="fc" id="L245">        System.out.println(&quot;Jelenlegi állás (JSON):&quot;);</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">        for (String key : highscores.keySet()) {</span>
+<span class="fc" id="L247">            System.out.println(key + &quot;: &quot; + highscores.getInt(key));</span>
+<span class="fc" id="L248">        }</span>
+
+<span class="fc" id="L250">        dao.printScores();</span>
+<span class="fc" id="L251">    }</span>
+
+
+
+
+    public void loadGameFromJson(String filename) {
+        try {
+<span class="fc" id="L258">            String content = new String(Files.readAllBytes(Paths.get(filename)));</span>
+<span class="fc" id="L259">            JSONObject gameState = new JSONObject(content);</span>
+
+            // jatekos visszaállítása
+<span class="fc" id="L262">            String currentPlayerName = gameState.getString(&quot;currentPlayer&quot;);</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">            if (currentPlayerName.equals(playerX.getName())) {</span>
+<span class="nc" id="L264">                currentPlayer = playerX;</span>
+            } else {
+<span class="fc" id="L266">                currentPlayer = playerO;</span>
+            }
+
+            // tábla visszatöltése
+<span class="fc" id="L270">            JSONArray boardArray = gameState.getJSONArray(&quot;board&quot;);</span>
+<span class="fc" id="L271">            char[][] grid = board.getGrid();</span>
+
+<span class="fc bfc" id="L273" title="All 2 branches covered.">            for (int r = 0; r &lt; board.getSor(); r++) {</span>
+<span class="fc" id="L274">                JSONArray rowArray = boardArray.getJSONArray(r);</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">                for (int c = 0; c &lt; board.getOszlop(); c++) {</span>
+<span class="fc" id="L276">                    String symbol = rowArray.getString(c);</span>
+<span class="fc" id="L277">                    grid[r][c] = symbol.charAt(0);</span>
+                }
+            }
+
+<span class="fc" id="L281">            System.out.println(&quot;Játékállás betöltve a JSON-ból: &quot; + filename);</span>
+<span class="fc" id="L282">            board.printBoard();</span>
+<span class="nc" id="L283">        } catch (IOException e) {</span>
+<span class="nc" id="L284">            System.out.println(&quot;Hiba a JSON betöltés közben: &quot; + e.getMessage());</span>
+<span class="fc" id="L285">        }</span>
+
+<span class="fc" id="L287">    }</span>
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

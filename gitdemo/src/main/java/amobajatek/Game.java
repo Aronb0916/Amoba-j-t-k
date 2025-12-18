@@ -8,12 +8,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 
 public class Game {
     final Board board;
     private final Player playerX;
     private final Player playerO;
-    private Player currentPlayer;
+    Player currentPlayer;
     private boolean aiFirstMove = true;
 
     public Game(int rows, int cols, String playerName) {
@@ -28,7 +34,7 @@ public class Game {
         board.printBoard();
     }
 
-    public boolean lepes(int row, int col) {
+    public boolean lepes(int row, int col) throws IOException {
         if (!isValid(row, col)) {
             System.out.println("Érvénytelen koordináta!");
             return false;
@@ -43,6 +49,7 @@ public class Game {
 
         if (checkWin(row, col)) {
             System.out.println(currentPlayer.getName() + " nyert!");
+            updateHighscore(currentPlayer.getName(), "highscores.json");
             return true;
         }
 
@@ -54,7 +61,7 @@ public class Game {
         return false;
     }
 
-    private void ellenfellepes(int lastHumanRow, int lastHumanCol) {
+    private void ellenfellepes(int lastHumanRow, int lastHumanCol) throws IOException {
         Random rnd = new Random();
 
         int[] winPos = findWinningMove(playerO.getSymbol());
@@ -64,6 +71,7 @@ public class Game {
             board.printBoard();
             if (checkWin(winPos[0], winPos[1])) {
                 System.out.println("Computer nyert!");
+                updateHighscore(playerO.getName(), "highscores.json");
                 return;
             }
             switchPlayer();
@@ -82,8 +90,8 @@ public class Game {
         int row, col;
         if (aiFirstMove) {
             do {
-                row = rnd.nextInt(board.getRows());
-                col = rnd.nextInt(board.getCols());
+                row = rnd.nextInt(board.getSor());
+                col = rnd.nextInt(board.getOszlop());
             } while (!board.isEmpty(row, col));
             board.placeSymbol(row, col, playerO.getSymbol());
             aiFirstMove = false;
@@ -100,8 +108,8 @@ public class Game {
             }
             if (!placed) {
                 do {
-                    row = rnd.nextInt(board.getRows());
-                    col = rnd.nextInt(board.getCols());
+                    row = rnd.nextInt(board.getSor());
+                    col = rnd.nextInt(board.getOszlop());
                 } while (!board.isEmpty(row, col));
                 board.placeSymbol(row, col, playerO.getSymbol());
             }
@@ -111,6 +119,7 @@ public class Game {
 
         if (checkWin(lastHumanRow, lastHumanCol)) {
             System.out.println("Ellenfél nyert!");
+            updateHighscore(playerO.getName(), "highscores.json");
             return;
         }
 
@@ -118,8 +127,8 @@ public class Game {
     }
 
     int[] findWinningMove(char symbol) {
-        for (int r = 0; r < board.getRows(); r++) {
-            for (int c = 0; c < board.getCols(); c++) {
+        for (int r = 0; r < board.getSor(); r++) {
+            for (int c = 0; c < board.getOszlop(); c++) {
                 if (board.isEmpty(r, c)) {
                     board.getGrid()[r][c] = symbol;
                     boolean win = checkWin(r, c);
@@ -146,12 +155,12 @@ public class Game {
         return list;
     }
 
-    private void switchPlayer() {
+    public void switchPlayer() {
         currentPlayer = (currentPlayer == playerX) ? playerO : playerX;
     }
 
-    private boolean isValid(int row, int col) {
-        return row >= 0 && row < board.getRows() && col >= 0 && col < board.getCols();
+    boolean isValid(int row, int col) {
+        return row >= 0 && row < board.getSor() && col >= 0 && col < board.getOszlop();
     }
 
     private boolean checkWin(int row, int col) {
@@ -162,7 +171,7 @@ public class Game {
                 || checkDirection(row, col, symbol, 1, -1);
     }
 
-    private boolean checkDirection(int row, int col, char symbol, int dr, int dc) {
+    boolean checkDirection(int row, int col, char symbol, int dr, int dc) {
         int count = 1;
 
         int r = row + dr;
@@ -188,9 +197,9 @@ public class Game {
             JSONArray boardArray = new JSONArray();
 
             char[][] grid = board.getGrid();
-            for (int r = 0; r < board.getRows(); r++) {
+            for (int r = 0; r < board.getSor(); r++) {
                 JSONArray rowArray = new JSONArray();
-                for (int c = 0; c < board.getCols(); c++) {
+                for (int c = 0; c < board.getOszlop(); c++) {
                     rowArray.put(String.valueOf(grid[r][c]));
                 }
                 boardArray.put(rowArray);
@@ -203,59 +212,79 @@ public class Game {
                 file.write(gameState.toString(4));
             }
 
-            System.out.println("Játékállás JSON formátumban elmentve: " + filename);
+            System.out.println("Jatekallas JSON formátumban elmentve: " + filename);
         } catch (IOException e) {
             System.out.println("Hiba a JSON mentés közben: " + e.getMessage());
         }
     }
+
+    public void updateHighscore(String winnerName, String filename) throws IOException {
+        highscoresql dao = new highscoresql();
+        dao.ensurePlayerExists(playerX.getName());
+        dao.ensurePlayerExists(playerO.getName());
+        dao.updateScore(winnerName);
+
+        // SQL-ből visszaolvasás
+        JSONObject highscores = new JSONObject();
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:amoba.db");
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT name, score FROM highscores")) {
+
+            while (rs.next()) {
+                highscores.put(rs.getString("name"), rs.getInt("score"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Hiba az SQL olvasás közben: " + e.getMessage());
+        }
+
+        // JSON fájlba írás
+        try (FileWriter file = new FileWriter(filename)) {
+            file.write(highscores.toString(4));
+        }
+
+        System.out.println("Jelenlegi állás (JSON):");
+        for (String key : highscores.keySet()) {
+            System.out.println(key + ": " + highscores.getInt(key));
+        }
+
+        dao.printScores();
+    }
+
+
+
 
     public void loadGameFromJson(String filename) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(filename)));
             JSONObject gameState = new JSONObject(content);
 
+            // jatekos visszaállítása
             String currentPlayerName = gameState.getString("currentPlayer");
-            currentPlayer = currentPlayerName.equals(playerX.getName()) ? playerX : playerO;
+            if (currentPlayerName.equals(playerX.getName())) {
+                currentPlayer = playerX;
+            } else {
+                currentPlayer = playerO;
+            }
 
+            // tábla visszatöltése
             JSONArray boardArray = gameState.getJSONArray("board");
             char[][] grid = board.getGrid();
-            for (int r = 0; r < board.getRows(); r++) {
+
+            for (int r = 0; r < board.getSor(); r++) {
                 JSONArray rowArray = boardArray.getJSONArray(r);
-                for (int c = 0; c < board.getCols(); c++) {
-                    grid[r][c] = rowArray.getString(c).charAt(0);
+                for (int c = 0; c < board.getOszlop(); c++) {
+                    String symbol = rowArray.getString(c);
+                    grid[r][c] = symbol.charAt(0);
                 }
             }
 
-            System.out.println("Jatekallas JSON fájlból: " + filename);
+            System.out.println("Játékállás betöltve a JSON-ból: " + filename);
             board.printBoard();
-        } catch (java.io.FileNotFoundException e) {
-            System.err.println("Nem található a fájl vagy olvasási hiba: " + e.getMessage());
-
         } catch (IOException e) {
             System.out.println("Hiba a JSON betöltés közben: " + e.getMessage());
         }
+
     }
-    public void updateHighscore(String winnerName, String filename) throws IOException {
-        JSONObject highscores;
 
-        if (Files.exists(Paths.get(filename))) {
-            String content = new String(Files.readAllBytes(Paths.get(filename)));
-            highscores = new JSONObject(content);
-        } else {
-            highscores = new JSONObject();
-        }
-
-        int currentScore = highscores.optInt(winnerName, 0);
-        highscores.put(winnerName, currentScore + 1);
-
-        try (FileWriter file = new FileWriter(filename)) {
-            file.write(highscores.toString(4));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println("Jelenlegi állás " + winnerName + ": " + (currentScore + 1));
-    } }
-    
-
+}
 
